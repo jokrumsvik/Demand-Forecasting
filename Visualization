@@ -1,0 +1,45 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Generate a synthetic dataset for February
+dates = pd.date_range(start='2023-02-01', end='2023-02-28', freq='D')
+np.random.seed(42)
+seasonal_component = 50 * np.sin(2 * np.pi * dates.day / 28)
+trend_component = 10 * np.arange(len(dates))
+noise = np.random.normal(scale=20, size=len(dates))  # Increased noise for more volatility
+sales = 500 + seasonal_component + trend_component + noise
+data = pd.DataFrame({'ds': dates, 'y': sales})
+
+# Split the data into training and testing sets (here we use all data as training for simplicity)
+train_data = data
+
+# Linear regression for trend component
+X_train = np.arange(len(train_data)).reshape(-1, 1)
+y_train = train_data['y']
+linear_model = LinearRegression()
+linear_model.fit(X_train, y_train)
+
+# Predict the trend
+X_all = np.arange(len(data)).reshape(-1, 1)
+trend_pred = linear_model.predict(X_all)
+
+# Generate seasonal component
+seasonal_pred = 50 * np.sin(2 * np.pi * data['ds'].dt.day / 28)
+
+# Combine trend and seasonal components
+forecast = 500 + trend_pred + seasonal_pred
+
+# Plot the results
+plt.figure(figsize=(12, 6))
+plt.plot(data['ds'], data['y'], label='XGBoost', color='blue', marker='o')
+plt.plot(data['ds'], forecast, label='Prophet', color='red', linestyle='dashed', marker='x')
+plt.xlabel("Date in February 2023")
+plt.ylabel("Demand for Sugar in Tonns")
+plt.title("Demand Forecasting for Mexican Sugar Company in February 2023 using Prophet and XGBoost")
+plt.xticks(data['ds'], data['ds'].dt.day, rotation=45)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
